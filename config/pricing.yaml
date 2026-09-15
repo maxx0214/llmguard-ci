@@ -1,0 +1,9 @@
+# Fill verified rates for your exact provider/model. Missing cost is N/A, not zero.
+as_of: null
+source: null
+models: {}
+# Example shape (replace MODEL and rates, then remove the comments):
+# models:
+#   openai/MODEL:
+#     input_cost_per_million_tokens: 0.0
+#     output_cost_per_million_tokens: 0.0

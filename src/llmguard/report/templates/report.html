@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LLMGuard CI | {{ run.status }} | BANKING77 v{{ run.prompt.version }}</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6f7;color:#202326;font:14px/1.55 system-ui,sans-serif;letter-spacing:0}
+header{background:#fff;border-bottom:1px solid #d9dee2}main,.heading{max-width:1120px;margin:auto;padding:24px}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:20px}h1{font-size:26px;margin:0}h2{font-size:19px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}
+p{margin:6px 0 12px}.muted{color:#5d646c}.badge{font-size:13px;font-weight:750;padding:5px 10px;border-radius:4px;display:inline-block}
+.PASS{background:#dff2e8;color:#115a36}.WARN{background:#fff0c8;color:#744d00}.FAIL{background:#fbe3e3;color:#a12020}.NA{background:#e9ecef;color:#555}.bounded{max-height:480px;overflow:auto}.bounded th{position:sticky;top:0}
+section{padding:22px 0;border-bottom:1px solid #d9dee2}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.metric strong{display:block;font-size:25px}.metric span{color:#5d646c}
+code{font-size:12px;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;background:white;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:11px 13px;border-bottom:1px solid #e1e5e8;vertical-align:top}th{font-size:12px;color:#535b62;background:#eef0f2}
+.scroll{overflow-x:auto}details{background:white;border:1px solid #d9dee2;border-radius:4px;margin:10px 0}summary{cursor:pointer;padding:12px;font-weight:650}
+.detail{padding:0 14px 14px;overflow-wrap:anywhere}.outputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.note{padding:12px 0;color:#754700;font-weight:650}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}footer{padding:24px 0;color:#5d646c}td,p,h1,h2{overflow-wrap:anywhere}
+@media(max-width:640px){main,.heading{padding:16px}.meta,.outputs{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.heading{align-items:flex-start}h1{font-size:23px}}
+@media print{body{background:white}details{break-inside:avoid}.scroll{overflow:visible}}
+</style>
+</head>
+<body>
+<header><div class="heading"><div><h1>LLMGuard CI</h1><span class="muted">BANKING77 Regression Report</span></div><span class="badge {{ run.status }}">{{ run.status }}</span></div></header>
+<main>
+{% if run.metadata.mode == 'offline' %}<p class="note">OFFLINE SYNTHETIC FIXTURES: predictions, judge analysis, timings and token usage are scripted. This is not benchmark performance.</p>{% endif %}
+<section class="meta">
+<div><h2>Candidate</h2><p>{{ run.prompt.id }} / v{{ run.prompt.version }}</p><p>{{ run.prompt.provider }} / {{ run.prompt.model }}</p><code>{{ run.run_id }}</code><p class="muted">{{ run.timestamp.isoformat() }}</p></div>
+<div><h2>Baseline</h2>{% if baseline %}<p>{{ baseline.prompt.id }} / v{{ baseline.prompt.version }}</p><p>{{ baseline.prompt.provider }} / {{ baseline.prompt.model }}</p><code>{{ baseline.run_id }}</code><p class="muted">{{ baseline.timestamp.isoformat() }}</p>{% else %}<p>{{ 'New baseline' if run.is_baseline else 'Standalone evaluation' }}</p>{% endif %}</div>
+</section>
+<section><h2>Benchmark</h2><p>{{ run.dataset.dataset }} / {{ run.dataset.split }} / {{ run.dataset.tier }} / {{ run.dataset.sample_count }} cases / seed {{ run.dataset.seed }}</p><p class="muted">Revision: <code>{{ run.dataset.revision }}</code></p></section>
+<section class="metrics">
+{% for label,value in [('Accuracy',format_metric('accuracy',run.metrics.accuracy)),('Macro F1',format_metric('macro_f1',run.metrics.macro_f1)),('Weighted F1',format_metric('weighted_f1',run.metrics.weighted_f1)),('Error Rate','%.2f%%'|format(run.metrics.error_rate*100))] %}
+<div class="metric"><strong>{{ value }}</strong><span>{{ label }}</span></div>{% endfor %}
+</section>
+{% if regression %}
+<section><h2>Quality Gates</h2><div class="scroll"><table><thead><tr><th>Metric</th><th>Baseline</th><th>Candidate</th><th>Absolute Delta</th><th>Relative Delta</th><th>Status</th></tr></thead><tbody>
+{% for metric in regression.metrics %}<tr><td>{{ metric.name }}<br><small class="muted">{{ metric.note }}</small></td><td>{{ format_metric(metric.name,metric.baseline) }}</td><td>{{ format_metric(metric.name,metric.candidate) }}</td><td>{{ format_metric(metric.name,metric.delta,true) }}</td><td>{{ ('%+.2f%%'|format(metric.change_pct)) if metric.change_pct is not none else 'N/A' }}</td><td><span class="badge {{ metric.severity|replace('/','') }}">{{ metric.severity }}</span></td></tr>{% endfor %}
+</tbody></table></div>{% for reason in regression.reasons %}<p>{{ reason }}</p>{% endfor %}</section>
+<section><h2>Error Transitions</h2><table><tr><th>Transition</th><th>Cases</th></tr>{% for name,ids in regression.transitions.items() %}<tr><td>{{ name|replace('_',' ') }}</td><td>{{ ids|length }}</td></tr>{% endfor %}</table></section>
+{% endif %}
+<section><h2>Top Confused Intent Pairs</h2><div class="scroll"><table><tr><th>Ground Truth</th><th>Predicted</th><th>Count</th></tr>{% for pair in run.metrics.top_confusions %}<tr><td>{{ pair.expected_intent }}</td><td>{{ pair.predicted_intent }}</td><td>{{ pair.count }}</td></tr>{% else %}<tr><td colspan="3">No classification errors</td></tr>{% endfor %}</table></div></section>
+<section><h2>Per-Class Results</h2><p class="muted">Macro precision {{ '%.2f%%'|format(run.metrics.macro_precision*100) }} / Macro recall {{ '%.2f%%'|format(run.metrics.macro_recall*100) }} / Fixed 77-label macro average</p><div class="bounded"><table><thead><tr><th>Intent</th><th>Support</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead><tbody>
+{% for intent,m in run.metrics.per_class.items() %}<tr><td>{{ intent }}</td><td>{{ m.support }}</td><td>{{ '%.3f'|format(m.precision) }}</td><td>{{ '%.3f'|format(m.recall) }}</td><td>{{ '%.3f'|format(m.f1) }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section><h2>LLM Judge Analysis</h2><p>{{ run.metrics.judge_count }} analyzed / {{ run.metrics.judge_error_count }} judge errors / semantic fit {{ format_metric('judge_semantic_fit',run.metrics.judge_semantic_fit) }} / {{ run.metrics.judge_severity_counts }}</p><p class="muted">Ground-truth correctness is authoritative. Judge results are qualitative; the optional judge gate uses paired cases only.</p>
+{% for judgment in run.judgments %}{% set case = cases[judgment.test_case_id] %}
+<details {% if case.test_case_id in regressed %}open{% endif %}><summary>{{ case.test_case_id }} {% if case.test_case_id in regressed %}<span class="badge FAIL">REGRESSION</span>{% endif %}{% if judgment.result %} / {{ judgment.result.severity }} / Fit {{ judgment.result.semantic_fit }}{% else %} / JUDGE ERROR{% endif %}</summary>
+<div class="detail"><p>{{ case.input_text }}</p><div class="outputs"><div><h3>Ground Truth</h3><p>{{ case.expected_intent }}</p></div><div><h3>Baseline</h3><p>{{ previous[case.test_case_id].predicted_intent if case.test_case_id in previous else '-' }}</p></div><div><h3>Candidate</h3><p>{{ case.predicted_intent or 'No valid prediction' }}</p></div></div>
+{% if judgment.result %}<p><b>Ambiguity:</b> {{ judgment.result.ambiguity }} / <b>Error type:</b> {{ judgment.result.error_type }}</p><p>{{ judgment.result.explanation }}</p>{% else %}<p>{{ judgment.error }}</p>{% endif %}</div></details>
+{% else %}<p>No cases selected for judging.</p>{% endfor %}</section>
+<section><h2>Operational Metrics</h2><div class="scroll"><table><thead><tr><th>Run</th><th>Mean / P50 / P95 (ms)</th><th>Classifier Tokens In / Out</th><th>Judge Tokens In / Out</th><th>Classifier Cost</th><th>Judge Cost</th><th>Total Cost</th></tr></thead><tbody>
+{% for label,item in [('Baseline',baseline),('Candidate',run)] %}{% if item %}<tr><td>{{ label }}</td><td>{{ '%.1f / %.1f / %.1f'|format(item.metrics.latency_mean,item.metrics.latency_p50,item.metrics.latency_p95) }}</td><td>{{ item.metrics.input_tokens }} / {{ item.metrics.output_tokens }}</td><td>{{ item.metrics.judge_input_tokens }} / {{ item.metrics.judge_output_tokens }}</td><td>{{ format_metric('cost',item.metrics.estimated_cost) }}</td><td>{{ format_metric('cost',item.metrics.judge_cost) }}</td><td>{{ format_metric('cost',item.metrics.total_estimated_cost) }}</td></tr>{% endif %}{% endfor %}
+</tbody></table></div><p class="muted">{{ run.metadata.latency_scope }}. {{ run.metadata.cost_scope }}. Missing prices or incomplete usage produce N/A cost.</p></section>
+<section><h2>Case Evidence</h2><p>Valid {{ run.metrics.valid_predictions }} / Invalid output {{ run.metrics.invalid_predictions }} / Execution errors {{ run.metrics.error_count }}</p>
+{% for case in run.cases %}<details><summary>{{ case.test_case_id }} / {{ 'CORRECT' if case.correct else 'INCORRECT' }}{% if case.error %} / {{ case.error_kind }}{% endif %}</summary><div class="detail"><p>{{ case.input_text }}</p><p>Ground truth: {{ case.expected_intent }} / Prediction: {{ case.predicted_intent or '-' }}</p>{% if case.error %}<p class="FAIL">{{ case.error }}</p>{% endif %}<p class="muted">{{ '%.1f'|format(case.latency_ms) }} ms / {{ case.input_tokens }} input + {{ case.output_tokens }} output / {{ format_metric('cost',case.estimated_cost) }}</p></div></details>{% endfor %}
+</section>
+<section><h2>Provenance</h2><p>Sample fingerprint: <code>{{ run.dataset.fingerprint }}</code></p><details><summary>Evaluation Settings</summary><div class="detail"><pre>{{ run.metadata|tojson(indent=2) }}</pre></div></details></section>
+<footer>LLMGuard CI / BANKING77 by Casanueva et al. / CC BY 4.0 / Restrict access to artifacts containing customer text.</footer>
+</main></body></html>

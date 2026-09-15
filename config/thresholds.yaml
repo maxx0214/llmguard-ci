@@ -1,0 +1,17 @@
+accuracy:
+  warning_drop: 0.02
+  critical_drop: 0.04
+macro_f1:
+  warning_drop: 0.02
+  critical_drop: 0.04
+latency_p95:
+  warning_increase_pct: 25
+  critical_increase_pct: 50
+cost:
+  warning_increase_pct: 25
+  critical_increase_pct: 50
+judge_semantic_fit:
+  enabled_as_gate: false
+  warning_drop: 0.30
+  critical_drop: 0.60
+max_error_rate: 0

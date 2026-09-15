@@ -1,0 +1,10 @@
+evaluation:
+  seed: 42
+  smoke_size: 100
+  regression_size: 500
+  concurrency: 3
+  timeout: 30
+judge:
+  enabled: true
+  max_cases: 100
+  model: null
