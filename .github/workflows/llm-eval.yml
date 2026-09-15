@@ -78,7 +78,7 @@ jobs:
           LLMGUARD_CONCURRENCY: '3'
         run: >-
           python -m llmguard.cli compare
-          --prompt prompts/banking77_v2.yaml
+          --prompt prompts/banking77_v3.yaml
           --tier "$LLMGUARD_TIER"
           --baseline-file "_baseline/baselines/$LLMGUARD_TIER.json"
       - name: Upload evaluation evidence
