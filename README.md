@@ -35,3 +35,65 @@ Each run writes JSON and an escaped responsive HTML report under `results/`. SQL
 ## CI
 
 Pull requests run tests and a smoke comparison. Manual workflow dispatch can select `smoke`, `regression`, or the paid `full` tier. The workflow reads `OPENAI_API_KEY` from a GitHub secret and model names from repository variables.
+
+## Generic evaluation suites (experimental)
+
+The original BANKING77 commands and artifacts are unchanged. The new
+`suite` command accepts task-specific user data in JSON, JSONL or CSV and either
+precomputed predictions or an explicitly configured chat-completions provider.
+
+| Task | Ground truth (`expected`) | Prediction (`prediction`) | Metrics |
+| --- | --- | --- | --- |
+| classification | label string | label string | Accuracy, macro F1 |
+| qa | reference answer string | response string | Normalized exact match, whitespace-token F1 |
+| retrieval | unique relevant document IDs | unique ranked document IDs (possibly empty) | Hit@K, Recall@K, MRR@K, binary nDCG@K |
+
+Every dataset row needs a unique string `id`, a nonempty `input` and `expected`.
+Prediction rows contain `id` and `prediction`; IDs must match the dataset.
+For CSV retrieval, encode list fields as JSON arrays inside quoted cells.
+Missing or invalid predictions count toward errors and fail the gate.
+Classification labels are inferred from the dataset. QA matching is lexical,
+not a semantic judge; retrieval scoring uses binary relevance.
+
+### Offline quick start
+
+```bash
+llmguard suite --config examples/suite/retrieval.yaml --output results/retrieval-baseline.json
+llmguard suite --config examples/suite/retrieval-candidate.yaml --output results/retrieval-candidate.json --baseline results/retrieval-baseline.json
+```
+
+The candidate intentionally regresses. Both JSON and HTML are written; the
+comparison returns exit code 1 on a regression or prediction error, and 2
+on invalid configuration. The baseline must be error-free and match the
+task, dataset fingerprint and retrieval depth. Per-metric tolerances are
+absolute score drops (0 to 1); unspecified tolerances are zero.
+
+### Live model evaluation
+
+For classification and QA, replace `predictions` in the suite YAML with a
+provider configuration:
+
+```yaml
+task: qa
+dataset: questions.jsonl
+provider:
+  name: openai
+  model: YOUR_MODEL
+  api_key_env: OPENAI_API_KEY
+  system_prompt: Answer directly and concisely.
+tolerances:
+  exact_match: 0.02
+  token_f1: 0.02
+```
+
+The provider adapter uses the OpenAI SDK's chat-completions interface.
+Other services serving that compatible API (including local model servers)
+can be selected by setting a distinct provider name, model, credential
+environment variable, and explicit `base_url`. Compatibility varies by
+service/model; no native non-OpenAI SDK or live provider verification is included.
+Model requests send dataset inputs to the selected endpoint and may incur fees.
+Never put credentials in YAML or commit sensitive data or generated reports.
+
+For retrieval, export ranked document IDs from your own retrieval pipeline
+and score them locally; no LLM provider is needed. The suite's JSON and HTML
+are separate from the legacy SQLite/BANKING77 baseline format.

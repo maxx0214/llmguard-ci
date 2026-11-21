@@ -21,7 +21,7 @@ from llmguard.storage.database import Database, export_baseline, read_baseline
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(prog="llmguard", description="LLMGuard CI: BANKING77 behavioral regression testing")
+    root = argparse.ArgumentParser(prog="llmguard", description="LLMGuard CI: behavioral regression testing (use llmguard suite --help for generic suites)")
     commands = root.add_subparsers(dest="command", required=True)
     for command in ("evaluate", "compare"):
         sub = commands.add_parser(command, help=f"{command.capitalize()} a versioned BANKING77 prompt")
@@ -148,6 +148,10 @@ async def execute(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     load_dotenv()
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "suite":
+        from llmguard.suite import main as suite_main
+        return suite_main(argv[1:])
     args = parser().parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s %(message)s")
     try:
