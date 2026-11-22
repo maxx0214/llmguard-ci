@@ -42,3 +42,4 @@ def test_unknown_cost_propagates():
     case.estimated_cost = None
     m = compute_metrics([case])
     assert m.estimated_cost is None and m.total_estimated_cost is None
+

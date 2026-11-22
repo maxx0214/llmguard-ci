@@ -113,3 +113,4 @@ def compare(baseline: EvaluationRun, candidate: EvaluationRun, thresholds: Thres
     status: Status = "FAIL" if "FAIL" in levels else "WARN" if "WARN" in levels else "PASS"
     return RegressionResult(baseline_run_id=baseline.run_id, candidate_run_id=candidate.run_id,
                             status=status, metrics=deltas, transitions=transitions, reasons=reasons)
+

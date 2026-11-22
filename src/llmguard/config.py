@@ -65,3 +65,4 @@ class PricingConfig(Model):
         return sum((u.input_tokens * self.models[f"{u.provider}/{u.model}"].input_cost_per_million_tokens
                     + u.output_tokens * self.models[f"{u.provider}/{u.model}"].output_cost_per_million_tokens)
                    / 1_000_000 for u in usage)
+

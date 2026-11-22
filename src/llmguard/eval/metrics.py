@@ -4,22 +4,8 @@ from statistics import mean
 
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_recall_fscore_support
 from llmguard.data.intents import INTENTS
+from llmguard.eval.aggregates import percentile, sum_cost
 from llmguard.models import ClassMetrics, ConfusionPair, JudgeCaseResult, Metrics, TestCaseResult
-
-
-def percentile(values: list[float], fraction: float) -> float:
-    """Linear interpolation, including singleton and empty sets."""
-    if not values:
-        return 0.0
-    values = sorted(values)
-    position = (len(values) - 1) * fraction
-    low = int(position)
-    high = min(low + 1, len(values) - 1)
-    return values[low] + (values[high] - values[low]) * (position - low)
-
-
-def sum_cost(values: list[float | None]) -> float | None:
-    return None if any(v is None for v in values) else sum(v for v in values if v is not None)
 
 
 def compute_metrics(cases: list[TestCaseResult],
@@ -64,3 +50,4 @@ def compute_metrics(cases: list[TestCaseResult],
         judge_input_tokens=sum(u.input_tokens for j in judgments for u in j.usage),
         judge_output_tokens=sum(u.output_tokens for j in judgments for u in j.usage),
         judge_cost=judge_cost, total_estimated_cost=sum_cost([classifier_cost, judge_cost]))
+

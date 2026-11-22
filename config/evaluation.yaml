@@ -8,3 +8,4 @@ judge:
   enabled: true
   max_cases: 100
   model: null
+

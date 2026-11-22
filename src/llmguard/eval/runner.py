@@ -72,3 +72,4 @@ async def evaluate(prompt: PromptConfig, cases: list[Banking77Case], dataset: Da
     run.metrics = compute_metrics(run.cases, run.judgments)
     run.status = "FAIL" if run.metrics.error_count or run.metrics.invalid_predictions else "PASS"
     return run
+

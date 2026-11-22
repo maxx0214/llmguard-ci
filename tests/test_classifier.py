@@ -80,8 +80,9 @@ def test_openai_key_required():
         OpenAIClient()
 
 
-def test_openai_sdk_serialization_without_network(prompt):
+def test_openai_sdk_serialization_without_network(prompt, caplog):
     import json
+    import logging
     import httpx
     from openai import AsyncOpenAI
     requests = []
@@ -95,6 +96,11 @@ def test_openai_sdk_serialization_without_network(prompt):
             assert (await client.classify("Where is my card?", prompt)).value.intent == "card_arrival"
         finally:
             await client.close()
-    asyncio.run(check())
+    with caplog.at_level(logging.DEBUG):
+        asyncio.run(check())
+        logging.getLogger("openai._base_client").debug("unrelated SDK log")
+    assert "Where is my card?" not in caplog.text and "offline-test-key" not in caplog.text
+    assert "unrelated SDK log" in caplog.text
     assert len(requests) == 1
     assert requests[0]["response_format"]["json_schema"]["schema"]["properties"]["intent"]["enum"] == list(INTENTS)
+

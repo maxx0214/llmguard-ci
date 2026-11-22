@@ -1,0 +1,11 @@
+# See the README for the BEIR evaluator and CPU PyTorch installation commands.
+huggingface-hub==0.36.1
+numpy==2.2.6
+openai==2.53.0
+pyarrow==23.0.0
+rank-bm25==0.2.2
+safetensors==0.7.0
+tiktoken==0.13.0
+tokenizers==0.22.1
+tqdm==4.67.1
+transformers==4.57.3

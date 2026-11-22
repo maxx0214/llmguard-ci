@@ -1,0 +1,7 @@
+task: retrieval
+dataset: retrieval.jsonl
+predictions: candidate.jsonl
+k: 2
+tolerances:
+  recall@2: 0.0
+

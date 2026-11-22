@@ -76,3 +76,4 @@ def test_enabled_judge_gate_requires_pairs(make_run, thresholds):
     thresholds.judge_semantic_fit.enabled_as_gate = True
     with pytest.raises(ValueError,match="paired"):
         compare(baseline,candidate,thresholds)
+

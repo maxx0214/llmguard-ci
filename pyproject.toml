@@ -1,22 +1,45 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "llmguard-ci"
-version = "0.2.0"
-description = "CI/CD regression testing for LLM behavior with BANKING77"
+description = "A local-first regression testing framework for AI systems."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
-dynamic = ["dependencies"]
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=6.0,<7"]
+rest = ["httpx>=0.28,<1", "llmguard-ci[yaml]", "python-dotenv>=1.0,<2"]
+openai = ["openai>=2.0,<3", "llmguard-ci[yaml]", "python-dotenv>=1.0,<2"]
+statistics = ["numpy>=1.24", "scipy>=1.9"]
+banking77 = ["llmguard-ci[openai]", "datasets>=4.0,<5", "scikit-learn>=1.4,<2",
+             "pydantic>=2.8,<3", "Jinja2>=3.1.6,<4"]
+benchmarks = ["llmguard-ci[openai,statistics]", "pyarrow>=15", "rank-bm25>=0.2.2,<1", "transformers>=4.57,<5"]
+dev = ["llmguard-ci[banking77,rest,statistics]", "pytest>=8.0,<10", "build>=1.2,<2", "twine>=6,<7"]
 
 [project.scripts]
 llmguard = "llmguard.cli:main"
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.dynamic]
-dependencies = {file = "requirements.txt"}
+version = {attr = "llmguard.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["llmguard", "llmguard.*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 "llmguard.report" = ["templates/*.html"]
@@ -24,3 +47,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+

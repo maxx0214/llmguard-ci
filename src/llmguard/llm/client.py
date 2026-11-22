@@ -44,3 +44,4 @@ class StructuredClient:
 
     async def judge_intent(self, system: str, payload: dict, model: str) -> Reply[IntentJudgeResult]:
         return await self._request(model, 0, system, json.dumps(payload, ensure_ascii=False), IntentJudgeResult)
+

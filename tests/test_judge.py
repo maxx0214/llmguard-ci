@@ -71,3 +71,4 @@ def test_paired_optional_gate(make_run,thresholds):
     candidate.judgments=[JudgeCaseResult(test_case_id=candidate.cases[0].test_case_id,result=judgment(2))]
     thresholds.judge_semantic_fit.enabled_as_gate=True
     assert compare(baseline,candidate,thresholds).status=="FAIL"
+

@@ -1,27 +1,22 @@
 """PASS/WARN=0, gate FAIL=1, execution/configuration error=2."""
+from __future__ import annotations
+
 import argparse
 import asyncio
 import logging
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from dotenv import load_dotenv
-from llmguard.config import JudgeConfig, PricingConfig, Settings, load_prompt, load_yaml
-from llmguard.data.banking77 import load_banking77
-from llmguard.eval.metrics import compute_metrics
-from llmguard.eval.runner import evaluate, run_metadata
-from llmguard.llm.client import LLMClient
-from llmguard.llm.offline import OfflineClient, fixture_dataset
-from llmguard.models import EvaluationRun, PromptConfig
-from llmguard.regression.comparator import compare, ensure_compatible
-from llmguard.regression.thresholds import load_thresholds
-from llmguard.report.html_report import markdown_summary, terminal_summary, write_report
-from llmguard.storage.database import Database, export_baseline, read_baseline
+if TYPE_CHECKING:
+    from llmguard.config import Settings
+    from llmguard.llm.client import LLMClient
+    from llmguard.models import EvaluationRun, PromptConfig
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(prog="llmguard", description="LLMGuard CI: BANKING77 behavioral regression testing")
+    root = argparse.ArgumentParser(prog="llmguard", description="LLMGuard CI: behavioral regression testing (use llmguard suite --help for generic suites)")
     commands = root.add_subparsers(dest="command", required=True)
     for command in ("evaluate", "compare"):
         sub = commands.add_parser(command, help=f"{command.capitalize()} a versioned BANKING77 prompt")
@@ -54,12 +49,15 @@ def parser() -> argparse.ArgumentParser:
 
 def create_client(prompt: PromptConfig, timeout: float, offline: bool, cases: list) -> LLMClient:
     if offline:
+        from llmguard.llm.offline import OfflineClient
         return OfflineClient(cases)
     from llmguard.llm.openai import OpenAIClient
     return OpenAIClient(timeout)
 
 
 def effective_settings(args: argparse.Namespace) -> Settings:
+    from llmguard.config import Settings, load_yaml
+
     data = load_yaml(args.config)
     settings = Settings.model_validate(data)
     values = settings.evaluation.model_dump()
@@ -81,6 +79,8 @@ def effective_settings(args: argparse.Namespace) -> Settings:
 
 def write_artifacts(run: EvaluationRun, baseline: EvaluationRun | None, regression,
                     directory: Path) -> Path:
+    from llmguard.report.html_report import markdown_summary, write_report
+
     directory.mkdir(parents=True, exist_ok=True)
     stem = directory / run.run_id
     stem.with_suffix(".json").write_text(run.model_dump_json(indent=2), encoding="utf-8")
@@ -96,6 +96,16 @@ def write_artifacts(run: EvaluationRun, baseline: EvaluationRun | None, regressi
 
 
 async def execute(args: argparse.Namespace) -> int:
+    from llmguard.config import PricingConfig, load_prompt, load_yaml
+    from llmguard.eval.metrics import compute_metrics
+    from llmguard.eval.runner import evaluate, run_metadata
+    from llmguard.llm.offline import fixture_dataset
+    from llmguard.models import EvaluationRun
+    from llmguard.regression.comparator import compare, ensure_compatible
+    from llmguard.regression.thresholds import load_thresholds
+    from llmguard.report.html_report import terminal_summary
+    from llmguard.storage.database import Database, export_baseline, read_baseline
+
     settings = effective_settings(args)
     config, judge = settings.evaluation, settings.judge
     prompt = load_prompt(args.prompt, args.model or ("offline-fixture" if args.offline else None))
@@ -113,6 +123,7 @@ async def execute(args: argparse.Namespace) -> int:
         cases, dataset = fixture_dataset()
         dataset.seed = config.seed
     else:
+        from llmguard.data.banking77 import load_banking77
         cases, dataset = load_banking77(args.tier, config.seed, args.split, config, args.cache_dir)
     db = Database(args.db)
     try:
@@ -147,14 +158,26 @@ async def execute(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    load_dotenv()
+    try:
+        from dotenv import load_dotenv
+    except ModuleNotFoundError:
+        pass
+    else:
+        load_dotenv()
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "suite":
+        from llmguard.suite import main as suite_main
+        return suite_main(argv[1:])
     args = parser().parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s %(message)s")
     try:
         return asyncio.run(execute(args))
     except Exception as exc:
         # SDK response bodies and tracebacks can contain user data or credentials.
-        message = str(exc) if isinstance(exc, (ValueError, OSError)) else type(exc).__name__
+        if isinstance(exc, ModuleNotFoundError) and not (exc.name or "").startswith("llmguard"):
+            message = "BANKING77 requires pip install 'llmguard-ci[banking77]'"
+        else:
+            message = str(exc) if isinstance(exc, (ValueError, OSError)) else type(exc).__name__
         print(f"LLMGuard execution/configuration error: {message}", file=sys.stderr)
         if os.getenv("GITHUB_STEP_SUMMARY"):
             try:
@@ -167,3 +190,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

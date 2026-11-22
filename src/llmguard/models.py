@@ -176,3 +176,4 @@ class RegressionResult(Model):
     metrics: list[MetricDelta]
     transitions: dict[str, list[str]]
     reasons: list[str] = Field(default_factory=list)
+

@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  OPENAI_API_KEY: ""
+  HF_DATASETS_OFFLINE: "1"
+  HF_HUB_OFFLINE: "1"
+  USE_TORCH: "0"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify core-only installation and README Quick Start
+        run: |
+          python -m venv "$RUNNER_TEMP/core"
+          source "$RUNNER_TEMP/core/bin/activate"
+          python -m pip install .
+          python -m pip check
+          python -c "from importlib.util import find_spec; assert all(find_spec(name) is None for name in ('httpx', 'numpy', 'scipy', 'openai', 'yaml'))"
+          python examples/quickstart.py
+          python -c "import json; from pathlib import Path; report = json.loads(Path('results/quickstart.json').read_text()); assert report['status'] == 'WARN' and report['execution']['api_calls'] == 0; assert Path('results/quickstart.html').is_file()"
+      - name: Install test extras
+        run: python -m pip install ".[dev]" "langchain-core>=0.3.86,<1"
+      - name: Test
+        run: python -m pytest -q
+
+  distribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install "build>=1.2,<2" "twine>=6,<7"
+      - run: python -m build
+      - run: python -m twine check --strict dist/*
+      - run: python scripts/check_release.py dist
+      - name: Install audited wheel and run Quick Start
+        run: |
+          python -m venv "$RUNNER_TEMP/wheel"
+          source "$RUNNER_TEMP/wheel/bin/activate"
+          python -m pip install --no-index dist/*.whl
+          python -m pip check
+          python examples/quickstart.py

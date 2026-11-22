@@ -44,3 +44,4 @@ def validate_intent(value: str) -> str:
 
 Intent = Annotated[str, Field(strict=True, json_schema_extra={"enum": list(INTENTS)}),
                    AfterValidator(validate_intent)]
+

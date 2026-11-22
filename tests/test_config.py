@@ -71,3 +71,4 @@ def test_cli_invalid_values(monkeypatch, flag, value):
     args = parser().parse_args(["evaluate","--prompt","x",flag,value])
     with pytest.raises(ValueError):
         effective_settings(args)
+

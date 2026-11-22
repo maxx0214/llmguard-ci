@@ -89,3 +89,4 @@ def test_builtin_csv_pipeline_without_network(monkeypatch, tmp_path):
     assert [c.expected_intent for c in cases] == ["card_arrival", "age_limit"]
     assert cases[0].id == "BANKING77-TEST-0001"
     assert info.sample_count == 2
+

@@ -143,3 +143,4 @@ def test_baseline_mismatch_preflight_blocks_provider(tmp_path,monkeypatch):
         pytest.fail("Provider must not be instantiated for an incompatible baseline")
     monkeypatch.setattr("llmguard.cli.create_client",forbidden)
     assert main(["compare","--prompt","prompts/banking77_v2.yaml","--seed","7",*common])==2
+

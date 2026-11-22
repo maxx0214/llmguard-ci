@@ -8,3 +8,4 @@ async def classify_query(query: str, prompt: PromptConfig,
     if not query.strip():
         raise ValueError("Query must not be blank")
     return (await client.classify(query, prompt)).value
+

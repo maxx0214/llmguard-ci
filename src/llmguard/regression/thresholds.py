@@ -44,3 +44,4 @@ class Thresholds(Model):
 
 def load_thresholds(path: Path) -> Thresholds:
     return Thresholds.model_validate(load_yaml(path))
+

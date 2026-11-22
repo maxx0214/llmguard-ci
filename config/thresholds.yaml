@@ -15,3 +15,4 @@ judge_semantic_fit:
   warning_drop: 0.30
   critical_drop: 0.60
 max_error_rate: 0
+

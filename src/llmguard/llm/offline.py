@@ -41,3 +41,4 @@ class OfflineClient:
 
     async def close(self) -> None:
         pass
+

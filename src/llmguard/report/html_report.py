@@ -88,3 +88,4 @@ def terminal_summary(run: EvaluationRun, baseline: EvaluationRun | None,
     lines += [f"Judge severity: {run.metrics.judge_severity_counts}; errors: {run.metrics.judge_error_count}",
               f"Invalid outputs: {run.metrics.invalid_predictions}; execution errors: {run.metrics.error_count}"]
     return "\n".join(lines)
+

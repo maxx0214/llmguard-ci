@@ -80,3 +80,4 @@ async def analyze_cases(cases: list[TestCaseResult], baseline: EvaluationRun | N
             group.create_task(worker())
     results.sort(key=lambda j: next(i for i, c in enumerate(selected) if c.test_case_id == j.test_case_id))
     return results, len(selected)
+

@@ -61,3 +61,4 @@ def make_run(prompt, pricing):
                              is_baseline=baseline,
                              metadata=run_metadata(prompt, pricing, prompt.model, JudgeConfig(), True, 3))
     return factory
+
