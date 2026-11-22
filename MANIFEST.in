@@ -1,6 +1,7 @@
 include CONTRIBUTING.md CHANGELOG.md requirements.txt
 include docs/usage.md docs/benchmarks.md docs/releasing.md docs/examples/comparison.html
 include docs/examples/comparison-preview.png
+include docs/assets/llmguard-ci.png docs/assets/llmguard-ci-dark.png
 include scripts/check_release.py
 include config/evaluation.yaml config/pricing.yaml config/thresholds.yaml
 include prompts/banking77_v1.yaml prompts/banking77_v2.yaml

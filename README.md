@@ -1,4 +1,9 @@
-<h1 align="center">LLMGuard CI</h1>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/llmguard-ci-dark.png">
+    <img src="docs/assets/llmguard-ci.png" width="660" alt="LLMGuard CI">
+  </picture>
+</h1>
 
 <p align="center"><strong>A local-first regression testing framework for AI systems.</strong></p>
 
