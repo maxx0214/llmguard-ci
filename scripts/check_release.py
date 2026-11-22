@@ -13,7 +13,8 @@ PACKAGE = "llmguard-ci"
 PUBLIC_FILES = {
     "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "MANIFEST.in",
     "pyproject.toml", "requirements.txt", "docs/usage.md", "docs/benchmarks.md",
-    "docs/releasing.md", "docs/examples/comparison.html", "scripts/check_release.py",
+    "docs/releasing.md", "docs/examples/comparison.html", "docs/examples/comparison-preview.png",
+    "scripts/check_release.py",
     "config/evaluation.yaml", "config/pricing.yaml", "config/thresholds.yaml",
     "prompts/banking77_v1.yaml", "prompts/banking77_v2.yaml",
     "examples/quickstart.py", "examples/suite/baseline.jsonl", "examples/suite/candidate.jsonl",

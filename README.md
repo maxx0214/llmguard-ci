@@ -1,28 +1,51 @@
-# LLMGuard CI
+<h1 align="center">LLMGuard CI</h1>
 
-**A local-first regression testing framework for AI systems.**
+<p align="center"><strong>A local-first regression testing framework for AI systems.</strong></p>
 
-Use the same cases to compare two versions of a retriever, language model, or
-classifier. LLMGuard CI scores both versions, identifies which cases changed,
-and applies a Quality Gate you define. It runs in your environment and can
-evaluate archived predictions without contacting a model.
+<p align="center">
+  Compare AI systems on the same cases, see which results changed, and catch regressions before shipping.
+</p>
+
+<p align="center">
+  <a href="https://github.com/maxx0214/llmguard-ci/actions/workflows/ci.yml?query=branch%3Arelease%2F0.3.0"><img alt="GitHub Actions status for release/0.3.0" src="https://github.com/maxx0214/llmguard-ci/actions/workflows/ci.yml/badge.svg?branch=release%2F0.3.0"></a>
+  &nbsp;•&nbsp; Python 3.11–3.13 &nbsp;•&nbsp; <a href="LICENSE">MIT License</a>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &nbsp;·&nbsp;
+  <a href="#comparison-report">Report Preview</a> &nbsp;·&nbsp;
+  <a href="#integrations">Integrations</a> &nbsp;·&nbsp;
+  <a href="#benchmark-validation">Benchmarks</a>
+</p>
 
 ## Quick Start
 
-From a checkout or extracted source distribution, with Python 3.11–3.13:
+From a checkout or extracted source distribution, run:
 
 ```bash
 python -m pip install .
 python examples/quickstart.py
 ```
 
-The example compares two local retrieval functions on three synthetic cases.
-It prints `WARN` because Hit@1 drops by one-third, between the configured warning
-and failure bounds. It writes `results/quickstart.json` and a single HTML report.
-Download and open the [generated HTML example](docs/examples/comparison.html)
-locally to see both sides, their deltas, and the affected cases.
+The demo compares two local retrievers on three synthetic cases. It runs
+without credentials and writes `results/quickstart.json` and
+`results/quickstart.html`. It reports `WARN` because the Hit@1 drop falls
+between the warning and failure thresholds.
 
-## Python SDK and Quality Gates
+## Comparison report
+
+<a href="docs/examples/comparison.html"><img src="docs/examples/comparison-preview.png" alt="The Quick Start report compares search-v1 and search-v2. Hit@1 falls from 1.0000 to 0.6667 and receives WARN, while Recall@3 stays at 1.0000." width="960"></a>
+
+The HTML report shows baseline and candidate scores, per-case changes, and
+execution details together. [Download the sample HTML](docs/examples/comparison.html)
+and open it in your browser.
+
+## Integrations
+
+### Python SDK
+
+Use a Python callable to evaluate a retriever, language model, or classifier
+and turn a Quality Gate failure into a CI failure.
 
 ```python
 from llmguard import Evaluator, System
@@ -45,10 +68,11 @@ mapping for two levels, or `on_unknown` to control how missing measurements
 affect the verdict. A saved SDK report can serve as the baseline. See the
 [usage guide](docs/usage.md) for async execution, custom metrics, and statistics.
 
-## REST API
+### REST API
 
-Install `python -m pip install ".[rest]"`. This example expects a service
-running on your machine and a response with ranked IDs under `hits`.
+Install the REST extra with `python -m pip install ".[rest]"`. The example
+expects a service on your machine whose response contains ranked IDs under
+`hits`.
 
 ```python
 from llmguard import Evaluator, RESTAdapter
@@ -68,7 +92,7 @@ For an authenticated service, use HTTPS and map header names to environment
 variables with `auth_headers`. REST calls send the mapped input fields to the
 configured endpoint.
 
-## Archived predictions
+### Saved predictions
 
 ```python
 from llmguard import Evaluator, PredictionFile
@@ -90,11 +114,11 @@ Replaying a file makes zero model calls.
 
 ```mermaid
 flowchart LR
-    Data[Dataset and field mapping] --> Eval[Evaluator]
-    Systems[Python, REST, or prediction files] --> Eval
-    Eval --> Engine[Scoring and Quality Gates]
+    Data["Dataset and field mapping"] --> Eval["Evaluator"]
+    Sources["Python, REST, or prediction files"] --> Eval
     Eval -. Optional local state .-> SQLite[(SQLite)]
-    Engine --> Reports[JSON and HTML reports]
+    Eval --> Engine["Scoring and Quality Gates"]
+    Engine --> Reports["JSON and HTML reports"]
 ```
 
 The SDK supports retrieval, lexical question-answering, and classification.
@@ -105,7 +129,7 @@ Use opaque case IDs and metadata. Keep SQLite state private because normalized
 predictions are stored there. Legacy suite and BANKING77 reports include case
 payloads. See the [data-handling notes](docs/usage.md#data-handling).
 
-## Validation
+## Benchmark validation
 
 | Dataset | Scope | Agreement with reference scorer |
 | --- | --- | --- |
@@ -122,12 +146,16 @@ versions over 157 cases and reproduced all 16 previously measured retrieval
 scores on both sides and the paired statistics. The run used saved rankings
 with a candidate pool of 50 and made zero model API calls.
 
-## Support and contributing
+## Documentation and support
 
-LLMGuard CI is tested on Python 3.11, 3.12, and 3.13. The core package has no
-third-party runtime dependencies. Install `[rest]`, `[statistics]`,
-`[openai]`, `[yaml]`, `[banking77]`, `[benchmarks]`, or `[dev]` as needed.
-The test workflow runs with no model credentials.
+The core package has no third-party runtime dependencies. Install extras for
+REST, statistics, OpenAI, YAML, BANKING77, public benchmarks, and development
+tools as needed. The test workflow runs without model credentials.
 
-[MIT license](LICENSE) · [Contributing](CONTRIBUTING.md) ·
-[Changelog](CHANGELOG.md) · [Maintainer release guide](docs/releasing.md)
+| Guide | What it covers |
+| --- | --- |
+| [Usage](docs/usage.md) | SDK, mappings, caching, statistics, and data handling |
+| [Benchmarks](docs/benchmarks.md) | Public datasets, scoring methods, and replay instructions |
+| [Contributing](CONTRIBUTING.md) | Local development, tests, and package checks |
+| [Changelog](CHANGELOG.md) | Release history |
+| [Releasing](docs/releasing.md) | Build verification and publication |
