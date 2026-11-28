@@ -146,11 +146,6 @@ QA variant and a truncated BM25 control failed it. These checks validate the
 scoring and comparison paths on the recorded runs. See the
 [benchmark methods and replay commands](docs/benchmarks.md).
 
-In an archived **Turini RAG** integration, the SDK replayed two retrieval
-versions over 157 cases and reproduced all 16 previously measured retrieval
-scores on both sides and the paired statistics. The run used saved rankings
-with a candidate pool of 50 and made zero model API calls.
-
 ## Documentation and support
 
 The core package has no third-party runtime dependencies. Install extras for
