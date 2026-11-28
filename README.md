@@ -13,7 +13,9 @@
 
 <p align="center">
   <a href="https://github.com/maxx0214/llmguard-ci/actions/workflows/ci.yml?query=branch%3Arelease%2F0.3.0"><img alt="GitHub Actions status for release/0.3.0" src="https://github.com/maxx0214/llmguard-ci/actions/workflows/ci.yml/badge.svg?branch=release%2F0.3.0"></a>
-  &nbsp;•&nbsp; Python 3.11–3.13 &nbsp;•&nbsp; <a href="LICENSE">MIT License</a>
+  <a href="https://pypi.org/project/llmguard-ci/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/llmguard-ci"></a>
+  <a href="https://pypi.org/project/llmguard-ci/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/llmguard-ci"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
 <p align="center">
@@ -25,17 +27,56 @@
 
 ## Quick Start
 
-From a checkout or extracted source distribution, run:
+Install the package from [PyPI](https://pypi.org/project/llmguard-ci/):
 
 ```bash
-python -m pip install .
-python examples/quickstart.py
+pip install llmguard-ci
 ```
 
-The demo compares two local retrievers on three synthetic cases. It runs
-without credentials and writes `results/quickstart.json` and
-`results/quickstart.html`. It reports `WARN` because the Hit@1 drop falls
-between the warning and failure thresholds.
+Requires Python 3.11 or later. The core installation has no third-party runtime dependencies.
+
+Save the following as `quickstart.py` and run `python quickstart.py`:
+
+```python
+from llmguard import Evaluator, System
+
+cases = [
+    {"id": "return", "input": "How do I return an order?", "expected": ["returns"]},
+    {"id": "shipping", "input": "When will my order ship?", "expected": ["shipping"]},
+    {"id": "tracking", "input": "How do I track a shipment?", "expected": ["tracking"]},
+]
+rankings = {case["input"]: case["expected"] for case in cases}
+
+
+def baseline(question):
+    return rankings[question]
+
+
+def candidate(question):
+    if question == cases[0]["input"]:
+        return ["shipping", "returns"]
+    return rankings[question]
+
+
+evaluator = Evaluator(
+    cases, "retrieval", ["hit@1", "recall@3"],
+    quality_gate={"max_drop": {"hit@1": {"warn": 0.10, "fail": 0.50}}},
+)
+result = evaluator.compare(
+    System(baseline, model_version="search-v1"),
+    System(candidate, model_version="search-v2"),
+)
+result.report("results/quickstart.json")
+print(result.status)  # WARN
+```
+
+The demo compares two local retrievers without credentials and writes
+`results/quickstart.json` and `results/quickstart.html`. It reports `WARN`
+because the Hit@1 drop falls between the warning and failure thresholds.
+
+The same demo is available in [examples/quickstart.py](examples/quickstart.py)
+for users working from a checkout. Run `python -m pip install .` to install
+from source.
 
 ## Comparison report
 
@@ -75,9 +116,9 @@ affect the verdict. A saved SDK report can serve as the baseline. See the
 
 ### REST API
 
-Install the REST extra with `python -m pip install ".[rest]"`. The example
-expects a service on your machine whose response contains ranked IDs under
-`hits`.
+Install the REST extra with `pip install "llmguard-ci[rest]"`. The example
+uses the sample dataset from this repository (download or clone it first)
+and expects a local service whose response contains ranked IDs under `hits`.
 
 ```python
 from llmguard import Evaluator, RESTAdapter
@@ -98,6 +139,8 @@ variables with `auth_headers`. REST calls send the mapped input fields to the
 configured endpoint.
 
 ### Saved predictions
+
+Download or clone this repository to use the sample JSONL files below.
 
 ```python
 from llmguard import Evaluator, PredictionFile
